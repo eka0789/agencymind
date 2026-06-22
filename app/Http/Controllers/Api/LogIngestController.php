@@ -81,6 +81,14 @@ class LogIngestController extends Controller
             }
         }
 
+        // Trigger rule engine evaluation
+        try {
+            $ruleEngine = new \App\Domain\LogIngest\RuleEngine();
+            $ruleEngine->evaluate($client);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to run RuleEngine for client [{$client->slug}]: " . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => "Successfully ingested {$insertedCount} log entries",

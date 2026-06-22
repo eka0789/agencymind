@@ -86,6 +86,17 @@ class PullLogsFromSSH implements ShouldQueue
             // 4. Parse log content
             $this->parseAndIngestLogs($content, $logSource);
 
+            // Trigger rule engine evaluation
+            try {
+                $ruleEngine = new \App\Domain\LogIngest\RuleEngine();
+                $client = \App\Models\Client::find($this->clientId);
+                if ($client) {
+                    $ruleEngine->evaluate($client);
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to run RuleEngine in PullLogsFromSSH for client [{$this->clientId}]: " . $e->getMessage());
+            }
+
             // 5. Update last polled timestamp
             $logSource->update([
                 'last_polled_at' => now(),

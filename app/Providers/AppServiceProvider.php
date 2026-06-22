@@ -16,7 +16,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Services\LLMGatewayManager::class, function () {
+            return new \App\Services\LLMGatewayManager();
+        });
+
+        $this->app->bind(\App\Services\LLMGatewayService::class, function ($app) {
+            return $app->make(\App\Services\LLMGatewayManager::class)->driver();
+        });
     }
 
     /**

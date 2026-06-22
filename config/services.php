@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o'),
+    ],
+
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20240620'),
+    ],
+
+    'llm' => [
+        'default' => env('LLM_DEFAULT_PROVIDER', 'openai'),
+    ],
+
 ];
