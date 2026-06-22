@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.schema' => \App\Http\Middleware\SetTenantSchema::class,
             'tenant.access' => \App\Http\Middleware\UserAccessMiddleware::class,
         ]);
+
+        $middleware->prependToPriorityList(
+            \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            \App\Http\Middleware\SetTenantSchema::class
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

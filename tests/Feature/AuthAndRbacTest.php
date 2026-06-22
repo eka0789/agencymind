@@ -4,13 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Client;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 class AuthAndRbacTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseMigrations;
 
     public function test_gates_restrict_unauthorized_users()
     {

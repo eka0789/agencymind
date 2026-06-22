@@ -7,7 +7,7 @@ use App\Models\Tenant\LogSource;
 use App\Models\Tenant\LogEntry;
 use App\Domain\Tenancy\TenantManager;
 use App\Domain\Tenancy\TenantAwareJob;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -36,7 +36,7 @@ class TestTenantJob implements ShouldQueue
 
 class TenancyTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseMigrations;
 
     protected $tenantManager;
 

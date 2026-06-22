@@ -25,7 +25,11 @@ class SetTenantSchema
         $clientSlug = $request->route('client') ?: $request->header('X-Tenant-Client');
 
         if ($clientSlug) {
-            $client = Client::where('slug', $clientSlug)->first();
+            if ($clientSlug instanceof Client) {
+                $client = $clientSlug;
+            } else {
+                $client = Client::where('slug', $clientSlug)->first();
+            }
 
             if ($client) {
                 // Switch schema

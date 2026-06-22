@@ -145,7 +145,7 @@ class LogIngestTest extends TestCase
         $parsedLogs = LogEntry::where('is_parsed', true)->get();
         $this->assertCount(2, $parsedLogs);
         $this->assertEquals('error', $parsedLogs[0]->level);
-        $this->assertEquals('Database connection failed', $parsedLogs[0]->raw_message);
+        $this->assertEquals('Database connection failed {"context":"value"}', $parsedLogs[0]->raw_message);
         $this->assertStringContainsString('Stack trace line 1', $parsedLogs[0]->stack_trace);
 
         $unparsedLogs = LogEntry::where('is_parsed', false)->get();

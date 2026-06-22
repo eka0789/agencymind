@@ -28,17 +28,15 @@ class TenantManager
             throw new \InvalidArgumentException("Invalid schema name: {$schemaName}");
         }
 
-        // 1. Create the schema in PostgreSQL
+        // 1. Create the schema in PostgreSQL using the central connection
         DB::statement("CREATE SCHEMA IF NOT EXISTS {$schemaName}");
 
-        // 2. Switch connection to the tenant schema temporarily
-        $originalSearchPath = DB::select("SHOW search_path")[0]->search_path ?? 'public';
-        
-        try {
-            // Set search path to tenant schema so migration table and other tables are created in it
-            DB::statement("SET search_path TO {$schemaName}");
+        // 2. Switch configuration to tenant schema and purge connection
+        config(['database.connections.pgsql.search_path' => $schemaName]);
+        DB::purge('pgsql');
 
-            // 3. Run tenant migrations
+        try {
+            // 3. Run tenant migrations on reconnected connection
             Artisan::call('migrate', [
                 '--path' => 'database/migrations/tenant',
                 '--force' => true,
@@ -46,8 +44,9 @@ class TenantManager
 
             Log::info("Created schema and ran migrations for tenant: {$schemaName}");
         } finally {
-            // 4. Restore original search path
-            DB::statement("SET search_path TO {$originalSearchPath}");
+            // 4. Restore configuration to public schema
+            config(['database.connections.pgsql.search_path' => 'public']);
+            DB::purge('pgsql');
         }
     }
 
@@ -66,7 +65,10 @@ class TenantManager
             throw new \InvalidArgumentException("Invalid schema name: {$schemaName}");
         }
 
-        DB::statement("SET search_path TO {$schemaName}, public");
+        // Dynamically update PostgreSQL search_path in config and purge to enforce
+        config(['database.connections.pgsql.search_path' => "{$schemaName},public"]);
+        DB::purge('pgsql');
+        DB::reconnect('pgsql');
     }
 
     /**
@@ -79,6 +81,8 @@ class TenantManager
             return;
         }
 
-        DB::statement("SET search_path TO public");
+        config(['database.connections.pgsql.search_path' => 'public']);
+        DB::purge('pgsql');
+        DB::reconnect('pgsql');
     }
 }
