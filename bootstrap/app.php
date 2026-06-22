@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant.schema' => \App\Http\Middleware\SetTenantSchema::class,
             'tenant.access' => \App\Http\Middleware\UserAccessMiddleware::class,
+            'auth.service' => \App\Http\Middleware\ServiceToServiceAuth::class,
         ]);
 
         $middleware->prependToPriorityList(

@@ -49,4 +49,9 @@ return [
         'default' => env('LLM_DEFAULT_PROVIDER', 'openai'),
     ],
 
+    'discord' => [
+        'api_token' => env('DISCORD_BOT_API_TOKEN'),
+        'webhook_url' => env('DISCORD_BOT_WEBHOOK_URL', 'http://127.0.0.1:3000/api/v1/webhooks/job-result'),
+    ],
+
 ];
