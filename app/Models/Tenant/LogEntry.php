@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class LogEntry extends Model
 {
+    use \Laravel\Scout\Searchable;
+
     // No updated_at field in log_entries table
     public $timestamps = false;
 
@@ -30,6 +32,19 @@ class LogEntry extends Model
         'is_parsed' => 'boolean',
         'created_at' => 'datetime',
     ];
+
+    /**
+     * Get the indexable data array for the model.
+     */
+    public function toSearchableArray()
+    {
+        $array = $this->toArray();
+
+        // Inject current tenant client_id for filtering in Meilisearch
+        $array['client_id'] = app(\App\Services\TenantManager::class)->getCurrentClient()?->id;
+
+        return $array;
+    }
 
     /**
      * The log source this entry belongs to.
