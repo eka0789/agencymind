@@ -10,18 +10,20 @@ use Illuminate\Notifications\Notifiable;
 
 use Laravel\Sanctum\HasApiTokens;
 
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
+// use Filament\Models\Contracts\FilamentUser;
+// use Filament\Panel;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable // implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    /*
     public function canAccessPanel(Panel $panel): bool
     {
         return in_array($this->role, ['owner', 'admin']);
     }
+    */
 
     /**
      * The attributes that are mass assignable.

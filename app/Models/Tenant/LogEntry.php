@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class LogEntry extends Model
 {
-    use \Laravel\Scout\Searchable;
+    // use \Laravel\Scout\Searchable;
 
     // No updated_at field in log_entries table
     public $timestamps = false;
