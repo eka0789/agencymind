@@ -291,7 +291,11 @@ PROMPT;
         try {
             $response = $this->llmManager->analyzeWithFallback(
                 "Client: {$client->name}\n\n=== SUMMARY ===\n{$summary}",
-                $systemPrompt
+                $systemPrompt,
+                [
+                    'client_id' => $client->id,
+                    'task_type' => 'validate',
+                ]
             );
 
             $cleanText = trim($response);

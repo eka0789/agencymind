@@ -97,7 +97,11 @@ class GenerateWeeklyReport implements ShouldQueue
             
             $draftContent = $llmManager->analyzeWithFallback(
                 $dataForLLM,
-                $systemPrompt
+                $systemPrompt,
+                [
+                    'client_id' => $this->clientId,
+                    'task_type' => 'weekly_report',
+                ]
             );
 
             // Save to WeeklyReport

@@ -90,7 +90,11 @@ class ProcessDiscordLogCheck implements ShouldQueue
                 
                 $summary = $llmManager->analyzeWithFallback(
                     "Here are the recent log entries:\n\n{$formattedLogs}",
-                    $systemPrompt
+                    $systemPrompt,
+                    [
+                        'client_id' => $this->clientId,
+                        'task_type' => 'log_check',
+                    ]
                 );
             }
 

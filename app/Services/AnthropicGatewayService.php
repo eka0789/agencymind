@@ -61,6 +61,27 @@ class AnthropicGatewayService implements LLMGatewayService
             throw new \Exception('Anthropic API call failed: ' . $errorMsg);
         }
 
+        // Extract usage
+        $promptTokens = $response->json('usage.input_tokens') ?? 0;
+        $completionTokens = $response->json('usage.output_tokens') ?? 0;
+        
+        // Estimate cost for claude-3-5-sonnet ($3.00/1M input, $15.00/1M output)
+        $cost = ($promptTokens / 1000000 * 3.0) + ($completionTokens / 1000000 * 15.0);
+
+        try {
+            \App\Models\LlmUsage::create([
+                'client_id' => $options['client_id'] ?? null,
+                'provider' => 'anthropic',
+                'model' => $model,
+                'task_type' => $options['task_type'] ?? null,
+                'prompt_tokens' => $promptTokens,
+                'completion_tokens' => $completionTokens,
+                'estimated_cost_usd' => $cost,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to log LLM usage: ' . $e->getMessage());
+        }
+
         return $response->json('content.0.text') ?? '';
     }
 }

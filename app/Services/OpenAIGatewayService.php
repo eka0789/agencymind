@@ -60,6 +60,27 @@ class OpenAIGatewayService implements LLMGatewayService
             throw new \Exception('OpenAI API call failed: ' . $errorMsg);
         }
 
+        // Extract usage
+        $promptTokens = $response->json('usage.prompt_tokens') ?? 0;
+        $completionTokens = $response->json('usage.completion_tokens') ?? 0;
+        
+        // Estimate cost for gpt-4o ($5.00/1M input, $15.00/1M output)
+        $cost = ($promptTokens / 1000000 * 5.0) + ($completionTokens / 1000000 * 15.0);
+
+        try {
+            \App\Models\LlmUsage::create([
+                'client_id' => $options['client_id'] ?? null,
+                'provider' => 'openai',
+                'model' => $model,
+                'task_type' => $options['task_type'] ?? null,
+                'prompt_tokens' => $promptTokens,
+                'completion_tokens' => $completionTokens,
+                'estimated_cost_usd' => $cost,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to log LLM usage: ' . $e->getMessage());
+        }
+
         return $response->json('choices.0.message.content') ?? '';
     }
 }

@@ -28,4 +28,31 @@ class PulseCardTest extends TestCase
             ->assertSee('Test Client A')
             ->assertSee('test-client-a');
     }
+
+    public function test_llm_cost_card_renders_successfully()
+    {
+        \Livewire\Livewire::withoutLazyLoading();
+
+        $client = Client::create([
+            'name' => 'Test Client B',
+            'slug' => 'test-client-b',
+            'contact_email' => 'b@test.com',
+            'status' => 'active',
+        ]);
+
+        \App\Models\LlmUsage::create([
+            'client_id' => $client->id,
+            'provider' => 'openai',
+            'model' => 'gpt-4o',
+            'task_type' => 'log_check',
+            'prompt_tokens' => 100,
+            'completion_tokens' => 50,
+            'estimated_cost_usd' => 0.00125,
+        ]);
+
+        Livewire::test(\App\Livewire\Pulse\LlmCostCard::class)
+            ->assertStatus(200)
+            ->assertSee('Test Client B')
+            ->assertSee('0.0013'); // rounded formatted cost or the value
+    }
 }
