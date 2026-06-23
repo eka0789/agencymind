@@ -59,6 +59,30 @@ const commands = [
         .addIntegerOption(option =>
             option.setName('value')
                 .setDescription('Nilai ambang batas baru')
+                .setRequired(true)),
+
+    new SlashCommandBuilder()
+        .setName('report-weekly')
+        .setDescription('Memicu pembuatan draf laporan mingguan untuk klien')
+        .addStringOption(option =>
+            option.setName('client')
+                .setDescription('Slug klien (e.g. toko-abc)')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('days')
+                .setDescription('Rentang hari (default 7)')
+                .setRequired(false)),
+
+    new SlashCommandBuilder()
+        .setName('report-approve')
+        .setDescription('Menyetujui dan mengirim draf laporan mingguan')
+        .addStringOption(option =>
+            option.setName('client')
+                .setDescription('Slug klien (e.g. toko-abc)')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('report_id')
+                .setDescription('ID Laporan Mingguan')
                 .setRequired(true))
 ].map(command => command.toJSON());
 
@@ -155,6 +179,33 @@ client.on('interactionCreate', async interaction => {
             }, bearerHeader);
 
             await interaction.editReply({ content: `✅ Ambang batas untuk **${clientSlug}** (parameter: **${parameter}**) berhasil diubah menjadi **${value}**.` });
+
+        } else if (commandName === 'report-weekly') {
+            await interaction.reply({ content: '⏳ Memicu Reporting Agent untuk membuat draf laporan mingguan...', ephemeral: false });
+            const clientSlug = options.getString('client');
+            const days = options.getInteger('days') || 7;
+
+            const response = await axios.post(`${apiUrl}/v1/commands/report-weekly`, {
+                client_slug: clientSlug,
+                days: days,
+                discord_channel_id: channelId,
+                requested_by_discord_id: user.id
+            }, bearerHeader);
+
+            await interaction.followUp({ content: `✅ Permintaan laporan diterima (Job ID: ${response.data.job_id}). Draf laporan akan dikirim setelah agen selesai merangkum.`, ephemeral: true });
+
+        } else if (commandName === 'report-approve') {
+            await interaction.reply({ content: '⏳ Menyetujui dan mengirim laporan...', ephemeral: false });
+            const clientSlug = options.getString('client');
+            const reportId = options.getInteger('report_id');
+
+            const response = await axios.post(`${apiUrl}/v1/commands/report-approve`, {
+                client_slug: clientSlug,
+                report_id: reportId,
+                requested_by_discord_id: user.id
+            }, bearerHeader);
+
+            await interaction.editReply({ content: `✅ Laporan Mingguan ID **${reportId}** berhasil disetujui dan dikirim.` });
         }
     } catch (error) {
         console.error('Error executing slash command:', error.response?.data || error.message);

@@ -96,6 +96,19 @@ app.post('/api/v1/webhooks/job-result', authMiddleware, async (req, res) => {
                 timestamp: new Date().toISOString(),
                 footer: { text: `Job ID: ${job_id}` }
             };
+        } else if (type === 'report_generated') {
+            // Handle weekly report draft
+            embed = {
+                title: `📝 Draf Laporan Mingguan: ${client_slug.toUpperCase()}`,
+                description: result.summary,
+                color: 0x9b59b6, // Purple
+                fields: [
+                    { name: 'Periode', value: result.period, inline: true },
+                    { name: 'Report ID', value: String(result.report_id), inline: true }
+                ],
+                timestamp: new Date().toISOString(),
+                footer: { text: `Job ID: ${job_id}` }
+            };
         }
 
         // Send message with user mention ping

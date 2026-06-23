@@ -26,6 +26,8 @@ Route::middleware(['auth.service'])->group(function () {
     Route::post('/v1/commands/log-check', [\App\Http\Controllers\Api\DiscordCommandController::class, 'logCheck']);
     Route::post('/v1/commands/validate', [\App\Http\Controllers\Api\DiscordCommandController::class, 'validateProject']);
     Route::post('/v1/commands/threshold-set', [\App\Http\Controllers\Api\DiscordCommandController::class, 'thresholdSet']);
+    Route::post('/v1/commands/report-weekly', [\App\Http\Controllers\Api\DiscordCommandController::class, 'reportWeekly']);
+    Route::post('/v1/commands/report-approve', [\App\Http\Controllers\Api\DiscordCommandController::class, 'reportApprove']);
 });
 
 Route::middleware(['auth.service', 'tenant.schema'])->group(function () {

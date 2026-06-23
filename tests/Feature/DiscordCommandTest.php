@@ -10,9 +10,11 @@ use App\Models\Tenant\LogSource;
 use App\Models\Tenant\LogEntry;
 use App\Models\Tenant\Incident;
 use App\Models\Tenant\ValidationResult;
+use App\Models\Tenant\WeeklyReport;
 use App\Domain\Tenancy\TenantManager;
 use App\Jobs\ProcessDiscordLogCheck;
 use App\Jobs\ProcessDiscordProjectValidation;
+use App\Jobs\GenerateWeeklyReport;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Http;
@@ -280,5 +282,97 @@ class DiscordCommandTest extends TestCase
                 && $request['discord_user_id'] === 'usr-333'
                 && isset($request['result']['summary']);
         });
+    }
+
+    public function test_report_weekly_endpoint_dispatches_job_and_logs_audit()
+    {
+        Queue::fake();
+
+        $client = Client::create([
+            'name' => 'Report Client',
+            'slug' => 'report-client-1',
+            'contact_email' => 'report@test.com',
+            'status' => 'active',
+        ]);
+
+        $user = User::factory()->create([
+            'discord_user_id' => 'report-user-123',
+            'role' => 'owner',
+        ]);
+
+        $response = $this->withHeaders([
+            'Authorization' => "Bearer {$this->token}"
+        ])->postJson('/api/v1/commands/report-weekly', [
+            'client_slug' => 'report-client-1',
+            'discord_channel_id' => 'chan-123',
+            'requested_by_discord_id' => 'report-user-123',
+            'days' => 14,
+        ]);
+
+        $response->assertStatus(202);
+        $response->assertJsonStructure(['job_id', 'status']);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $user->id,
+            'client_id' => $client->id,
+            'action_type' => 'report_weekly',
+        ]);
+
+        Queue::assertPushed(GenerateWeeklyReport::class, function ($job) use ($client) {
+            return $job->clientId === $client->id
+                && $job->discordChannelId === 'chan-123'
+                && $job->discordUserId === 'report-user-123'
+                && $job->days === 14;
+        });
+    }
+
+    public function test_report_approve_endpoint_updates_report_status_and_logs_audit()
+    {
+        $client = Client::create([
+            'name' => 'Approve Client',
+            'slug' => 'approve-client-1',
+            'contact_email' => 'approve@test.com',
+            'status' => 'active',
+        ]);
+
+        $user = User::factory()->create([
+            'discord_user_id' => 'approve-user-123',
+            'role' => 'lead_dev',
+        ]);
+
+        $this->tenantManager->switchToTenant($client);
+
+        $report = WeeklyReport::create([
+            'period_start' => now()->subDays(7),
+            'period_end' => now(),
+            'draft_content' => 'Test Draft',
+            'status' => 'draft'
+        ]);
+
+        $this->tenantManager->resetToCentral();
+
+        $response = $this->withHeaders([
+            'Authorization' => "Bearer {$this->token}"
+        ])->postJson('/api/v1/commands/report-approve', [
+            'client_slug' => 'approve-client-1',
+            'report_id' => $report->id,
+            'requested_by_discord_id' => 'approve-user-123',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['status' => 'success']);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $user->id,
+            'client_id' => $client->id,
+            'action_type' => 'report_approve',
+        ]);
+
+        $this->tenantManager->switchToTenant($client);
+        $updatedReport = WeeklyReport::find($report->id);
+        $this->assertEquals('sent', $updatedReport->status);
+        $this->assertEquals($user->id, $updatedReport->reviewed_by_user_id);
+        $this->assertNotNull($updatedReport->sent_at);
+        $this->tenantManager->resetToCentral();
     }
 }
